@@ -842,6 +842,50 @@ def _dedisperse_waterfall(wfall, dm, freq, dt, ref_freq="top"):
     return dedisp
 
 
+def _dedisperse_voltages(volt, dm, freq, dt, ref_freq="top"):
+    """Coherently dedisperse a voltage matrix to given DM."""
+    k_dm = 1. / 2.41e-4
+    dedisp = np.zeros_like(wfall)
+
+    # pick reference frequency for dedispersion
+    if ref_freq == "top":
+        reference_frequency = freq[-1]
+    elif ref_freq == "center":
+        center_idx = len(freq) // 2
+        reference_frequency = freq[center_idx]
+    elif ref_freq == "bottom":
+        reference_frequency = freq[0]
+    else:
+        print("`ref_freq` not recognized, using 'top'")
+        reference_frequency = freq[-1]
+
+    #coherent shift
+    f = np.fft.fftfreq(len(volt[0,0,:]), d = dt * 1e6)
+    coherent_shift = (
+            +2j
+            * np.pi
+            * 1e6
+            * k_dm
+            * dm
+            * f[np.newaxis,:]**2
+            / (f[np.newaxis,:] + freq[:,np.newaxis])
+            / freq[:,np.newaxis] ** 2
+        ) 
+
+    H = np.exp(coherent_shift)
+    volt = np.fft.ifft(np.fft.fft(volt[:,:,:]) * H[:,np.newaxis,:])
+
+    wfall = np.abs(volt[:,0,:])**2+np.abs(volt[:,1,:])**2
+    #incoherent shift
+
+    shift = (k_dm * dm * (reference_frequency**-2 - freq**-2) \
+        / dt).round().astype(int)
+    for i, ts in enumerate(wfall):
+        dedisp[i] = np.roll(ts, shift[i])
+
+    return dedisp
+
+
 def _init_dm(fname, dm_s, dm_e):
     """Initialize DM limits of the search if not specified."""
     archive = psrchive.Archive_load(fname)
@@ -901,7 +945,7 @@ def from_PSRCHIVE(fname, dm_s, dm_e, dm_step, ref_freq="top",
 def get_dm(waterfall, dm_list, t_res, f_channels, ref_freq="top",
            manual_cutoff=False, manual_bandwidth=False, fname="",
            no_plots=False, blackonwhite=False, fformat=".pdf",
-           output_snr=False):
+           output_snr=False, voltages=None):
     """Brute-force search of the Dispersion Measure of a waterfall numpy
     matrix. The algorithm uses phase information and is robust to
     interference and unusual burst shapes.
@@ -927,6 +971,9 @@ def get_dm(waterfall, dm_list, t_res, f_channels, ref_freq="top",
         Filename used as a prefix for the diagnostic plots.
     output_snr : bool, optional. Default = False
         If True, return the peak S/N as a third variable.
+    voltages = ndarray, optional. Default = None
+        If not None, contains the baseband voltages of waterfall.
+        If not None, coherent dedispersion trials used.
 
     Returns
     -------
@@ -953,13 +1000,24 @@ def get_dm(waterfall, dm_list, t_res, f_channels, ref_freq="top",
     power_spectra = np.zeros([nbin, dm_list.size])
 
     for i, dm in enumerate(dm_list):
-        waterfall_dedisp = _dedisperse_waterfall(
-            waterfall,
-            dm,
-            f_channels,
-            t_res,
-            ref_freq=ref_freq
-        )
+        if voltages:
+            # do coherent dedispersion
+            waterfall_dedisp = _dedisperse_voltages(
+                voltages,
+                dm,
+                f_channels,
+                t_res,
+                ref_freq=ref_freq
+            )
+        else:
+            # do incoherent dedispersion
+            waterfall_dedisp = _dedisperse_waterfall(
+                waterfall,
+                dm,
+                f_channels,
+                t_res,
+                ref_freq=ref_freq
+            )
         power_spectrum = _get_coherent_power_spectrum(waterfall_dedisp)
         power_spectra[:, i] = power_spectrum[: nbin]
 
