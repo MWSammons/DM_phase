@@ -845,8 +845,7 @@ def _dedisperse_waterfall(wfall, dm, freq, dt, ref_freq="top"):
 def _dedisperse_voltages(volt, dm, freq, dt, ref_freq="top"):
     """Coherently dedisperse a voltage matrix to given DM."""
     k_dm = 1. / 2.41e-4
-    dedisp = np.zeros_like(wfall)
-
+    voltCopy = volt.copy()
     # pick reference frequency for dedispersion
     if ref_freq == "top":
         reference_frequency = freq[-1]
@@ -860,7 +859,7 @@ def _dedisperse_voltages(volt, dm, freq, dt, ref_freq="top"):
         reference_frequency = freq[-1]
 
     #coherent shift
-    f = np.fft.fftfreq(len(volt[0,0,:]), d = dt * 1e6)
+    f = np.fft.fftfreq(len(voltCopy[0,0,:]), d = dt * 1e6)
     coherent_shift = (
             +2j
             * np.pi
@@ -873,10 +872,11 @@ def _dedisperse_voltages(volt, dm, freq, dt, ref_freq="top"):
         ) 
 
     H = np.exp(coherent_shift)
-    volt = np.fft.ifft(np.fft.fft(volt[:,:,:]) * H[:,np.newaxis,:])
+    voltCopy = np.fft.ifft(np.fft.fft(voltCopy[:,:,:]) * H[:,np.newaxis,:])
 
-    wfall = np.abs(volt[:,0,:])**2+np.abs(volt[:,1,:])**2
+    wfall = np.abs(voltCopy[:,0,:])**2+np.abs(voltCopy[:,1,:])**2
     #incoherent shift
+    dedisp = np.zeros_like(wfall)
 
     shift = (k_dm * dm * (reference_frequency**-2 - freq**-2) \
         / dt).round().astype(int)
