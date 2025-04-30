@@ -1000,7 +1000,7 @@ def get_dm(waterfall, dm_list, t_res, f_channels, ref_freq="top",
     power_spectra = np.zeros([nbin, dm_list.size])
 
     for i, dm in enumerate(dm_list):
-        if voltages!=None:
+        if type(voltages)==np.ndarray:
             # do coherent dedispersion
             waterfall_dedisp = _dedisperse_voltages(
                 voltages,
