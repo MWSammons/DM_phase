@@ -844,7 +844,6 @@ def _dedisperse_waterfall(wfall, dm, freq, dt, ref_freq="top"):
 
 def _dedisperse_voltages(volt, dm, freq, dt, ref_freq="top"):
     """Coherently dedisperse a voltage matrix to given DM."""
-    print('Doing coherent dedispersion trial')
     k_dm = 1. / 2.41e-4
     voltCopy = volt.copy()
     # pick reference frequency for dedispersion
