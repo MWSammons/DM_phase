@@ -1083,7 +1083,7 @@ def get_dm(waterfall, dm_list, t_res, f_channels, ref_freq="top",
     )
     if output_snr:
         return dm, dm_std, np.max(SNR)
-    if output_power_spectra
+    if output_power_spectra:
         return dm, dm_std, power_spectra
     else:
         return dm, dm_std
