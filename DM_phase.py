@@ -945,7 +945,7 @@ def from_PSRCHIVE(fname, dm_s, dm_e, dm_step, ref_freq="top",
 def get_dm(waterfall, dm_list, t_res, f_channels, ref_freq="top",
            manual_cutoff=False, manual_bandwidth=False, fname="",
            no_plots=False, blackonwhite=False, fformat=".pdf",
-           output_snr=False, voltages=None):
+           output_snr=False, output_power_spectra=False, voltages=None):
     """Brute-force search of the Dispersion Measure of a waterfall numpy
     matrix. The algorithm uses phase information and is robust to
     interference and unusual burst shapes.
@@ -971,6 +971,8 @@ def get_dm(waterfall, dm_list, t_res, f_channels, ref_freq="top",
         Filename used as a prefix for the diagnostic plots.
     output_snr : bool, optional. Default = False
         If True, return the peak S/N as a third variable.
+    output_power_spectra : bool, optional. Default = False
+        If True, return the power spectrum as a third variable.
     voltages = ndarray, optional. Default = None
         If not None, contains the baseband voltages of waterfall.
         If not None, coherent dedispersion trials used.
@@ -1081,6 +1083,8 @@ def get_dm(waterfall, dm_list, t_res, f_channels, ref_freq="top",
     )
     if output_snr:
         return dm, dm_std, np.max(SNR)
+    if output_power_spectra
+        return dm, dm_std, power_spectra
     else:
         return dm, dm_std
 
