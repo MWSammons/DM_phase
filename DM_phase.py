@@ -883,7 +883,7 @@ def _dedisperse_voltages(volt, dm, freq, dt, ref_freq="top", returnVolts=False):
     for i, ts in enumerate(wfall):
         dedisp[i] = np.roll(ts, shift[i])
     if returnVolts:
-        for i range(voltCopy.shape[0]):
+        for i in range(voltCopy.shape[0]):
             voltCopy[i] = np.roll(voltCopy[i], shift[i],axis=1)
         return dedisp, voltCopy 
 
