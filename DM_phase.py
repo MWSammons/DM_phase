@@ -842,7 +842,7 @@ def _dedisperse_waterfall(wfall, dm, freq, dt, ref_freq="top"):
     return dedisp
 
 
-def _dedisperse_voltages(volt, dm, freq, dt, ref_freq="top"):
+def _dedisperse_voltages(volt, dm, freq, dt, ref_freq="top", returnVolts=False):
     """Coherently dedisperse a voltage matrix to given DM."""
     k_dm = 1. / 2.41e-4
     voltCopy = volt.copy()
@@ -882,6 +882,10 @@ def _dedisperse_voltages(volt, dm, freq, dt, ref_freq="top"):
         / dt).round().astype(int)
     for i, ts in enumerate(wfall):
         dedisp[i] = np.roll(ts, shift[i])
+    if returnVolts:
+        for i range(voltCopy.shape[0]):
+            voltCopy[i] = np.roll(voltCopy[i], shift[i],axis=1)
+        return dedisp, voltCopy 
 
     return dedisp
 
